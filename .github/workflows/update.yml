@@ -2,13 +2,12 @@ name: Auto-update Cursor
 
 on:
   schedule:
-    # Run three times weekly: Monday, Wednesday, and Friday at 9:00 AM UTC
-    - cron: '0 9 * * 1,3,5'
-  workflow_dispatch: # Allow manual trigger
+    # Daily at 9:00 AM MSK (6:00 AM UTC)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   update:
@@ -34,23 +33,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Debug API connectivity
-        run: |
-          echo "Testing Cursor API..."
-          curl -v "https://api2.cursor.sh/updates/api/download/stable/linux-x64/cursor" 2>&1 | head -50
-          echo "---"
-          curl -sS "https://api2.cursor.sh/updates/api/download/stable/linux-x64/cursor" | jq . || echo "JQ parse failed"
-
       - name: Check for updates
         id: update
         run: |
-          set +e  # Don't exit on error
+          set +e
           ./scripts/update-version.sh
           UPDATE_EXIT_CODE=$?
           set -e
 
           if [ $UPDATE_EXIT_CODE -eq 0 ]; then
-            # Check if there were any changes
             if git diff --quiet package.nix; then
               echo "has_updates=false" >> $GITHUB_OUTPUT
               echo "No updates available"
@@ -66,7 +57,7 @@ jobs:
             exit 1
           fi
 
-      - name: Test build (Linux x86_64)
+      - name: Test build
         if: steps.update.outputs.has_updates == 'true'
         env:
           NIXPKGS_ALLOW_UNFREE: "1"
@@ -74,53 +65,9 @@ jobs:
           nix build .#cursor --print-build-logs --impure
           nix flake check --impure
 
-      - name: Create Pull Request
+      - name: Commit and push
         if: steps.update.outputs.has_updates == 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update cursor to ${{ steps.update.outputs.new_version }}"
-          title: "chore: update cursor to ${{ steps.update.outputs.new_version }}"
-          body: |
-            ## Cursor Update
-
-            This PR updates Cursor to version **${{ steps.update.outputs.new_version }}**.
-
-            ### Changes
-            - Updated version in `package.nix`
-            - Updated download URLs for all platforms
-            - Updated hashes for all platforms
-            - Ran `nix flake update`
-
-            ### Testing
-            - ✅ Built successfully on Linux x86_64
-            - ✅ Flake checks passed
-
-            ### Changelog
-            See: https://www.cursor.com/changelog
-
-            ---
-            🤖 This PR was created automatically by the auto-update workflow.
-          branch: auto-update/cursor-${{ steps.update.outputs.new_version }}
-          delete-branch: true
-          labels: |
-            automated
-            cursor-update
-
-      - name: Enable auto-merge
-        if: steps.update.outputs.has_updates == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Wait a moment for the PR to be created
-          sleep 5
-
-          # Get the PR number
-          PR_NUMBER=$(gh pr list --head auto-update/cursor-${{ steps.update.outputs.new_version }} --json number --jq '.[0].number')
-
-          if [ -n "$PR_NUMBER" ]; then
-            echo "Enabling auto-merge for PR #$PR_NUMBER"
-            gh pr merge "$PR_NUMBER" --auto --squash
-          else
-            echo "Could not find PR to enable auto-merge"
-          fi
+          git add package.nix flake.lock
+          git commit -m "chore: update cursor to ${{ steps.update.outputs.new_version }}"
+          git push

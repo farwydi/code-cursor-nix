@@ -68,6 +68,7 @@ jobs:
       - name: Commit and push
         if: steps.update.outputs.has_updates == 'true'
         run: |
-          git add package.nix flake.lock
+          git add package.nix
+          git diff --quiet --cached && { echo "No changes to commit"; exit 0; }
           git commit -m "chore: update cursor to ${{ steps.update.outputs.new_version }}"
           git push

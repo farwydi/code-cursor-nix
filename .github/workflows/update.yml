@@ -57,6 +57,32 @@ jobs:
             exit 1
           fi
 
+      - name: Verify all platform source hashes
+        if: steps.update.outputs.has_updates == 'true'
+        run: |
+          set -euo pipefail
+          fail=0
+          # Extract each (url, hash) pair from package.nix and re-prefetch.
+          # The runner is x86_64-linux but fetchurl FODs are platform-independent,
+          # so this catches bad aarch64/darwin hashes that `nix build .#cursor`
+          # alone would miss.
+          version=$(grep -oP 'version = "\K[^"]+' package.nix | head -1)
+          urls=$(grep -oP 'url = "\K[^"]+' package.nix)
+          hashes=$(grep -oP 'hash = "\K[^"]+' package.nix)
+          while IFS='|' read -r url expected; do
+            url=${url//\$\{version\}/$version}
+            got=$(nix-hash --to-sri --type sha256 "$(nix-prefetch-url "$url" 2>/dev/null)")
+            if [ "$got" != "$expected" ]; then
+              echo "::error::Hash mismatch for $url"
+              echo "  expected: $expected"
+              echo "  got:      $got"
+              fail=1
+            else
+              echo "OK: $url"
+            fi
+          done < <(paste -d'|' <(echo "$urls") <(echo "$hashes"))
+          [ $fail -eq 0 ]
+
       - name: Test build
         if: steps.update.outputs.has_updates == 'true'
         env:

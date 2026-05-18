@@ -81,6 +81,17 @@ main() {
         ["aarch64-darwin"]="darwin-arm64"
     )
 
+    # Canonical URL path suffix per platform — MUST match the URLs in package.nix
+    # exactly. We pin to downloads.cursor.com (what Nix fetches), not the API's
+    # downloadUrl, which may point at a different mirror/build with a different
+    # hash (the cause of past Linux hash mismatches).
+    declare -A PATH_MAP=(
+        ["x86_64-linux"]="linux/x64/Cursor-${latest_version}-x86_64.AppImage"
+        ["aarch64-linux"]="linux/arm64/Cursor-${latest_version}-aarch64.AppImage"
+        ["x86_64-darwin"]="darwin/x64/Cursor-darwin-x64.dmg"
+        ["aarch64-darwin"]="darwin/arm64/Cursor-darwin-arm64.dmg"
+    )
+
     declare -A NEW_URLS
     declare -A NEW_HASHES
     declare -A NEW_COMMITS
@@ -99,17 +110,26 @@ main() {
             exit 0
         fi
 
-        local download_url
-        download_url=$(echo "$resp" | jq -r '.downloadUrl')
-        NEW_URLS[$nix_plat]="$download_url"
+        local api_url
+        api_url=$(echo "$resp" | jq -r '.downloadUrl')
 
         local commit_sha
-        commit_sha=$(echo "$download_url" | grep -oP 'production/\K[^/]+' | head -1)
+        commit_sha=$(echo "$api_url" | grep -oP 'production/\K[^/]+' | head -1)
+        if [[ -z "$commit_sha" ]]; then
+            err "Could not extract commit sha from API URL for $nix_plat: $api_url"
+            exit 1
+        fi
         NEW_COMMITS[$nix_plat]="$commit_sha"
 
-        log "Prefetching $nix_plat..."
+        # Reconstruct the canonical URL exactly as written into package.nix and
+        # prefetch the hash from THAT, so the recorded hash always matches what
+        # Nix will actually download.
+        local canonical_url="https://downloads.cursor.com/production/${commit_sha}/${PATH_MAP[$nix_plat]}"
+        NEW_URLS[$nix_plat]="$canonical_url"
+
+        log "Prefetching $nix_plat from $canonical_url ..."
         local hash
-        hash=$(prefetch_hash "$download_url")
+        hash=$(prefetch_hash "$canonical_url")
         NEW_HASHES[$nix_plat]="$hash"
         log "$nix_plat: commit=$commit_sha hash=$hash"
     done

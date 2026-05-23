@@ -67,11 +67,10 @@ main() {
     log "Latest version: $latest_version"
 
     if [[ "$current_version" == "$latest_version" ]]; then
-        log "Already at latest version"
-        exit 0
+        log "Already at latest version — re-prefetching hashes to detect upstream mutations"
+    else
+        log "Update available: $current_version -> $latest_version"
     fi
-
-    log "Update available: $current_version -> $latest_version"
 
     # Define platforms: nix_platform -> api_platform
     declare -A API_MAP=(

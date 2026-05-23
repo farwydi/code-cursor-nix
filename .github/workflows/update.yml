@@ -2,8 +2,10 @@ name: Auto-update Cursor
 
 on:
   schedule:
-    # Daily at 9:00 AM MSK (6:00 AM UTC)
-    - cron: '0 6 * * *'
+    # Every 6 hours — picks up new releases AND self-heals when Cursor
+    # silently mutates the binary at an already-published URL (their CDN
+    # sometimes overwrites files even though the URL contains a commit sha).
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -36,25 +38,37 @@ jobs:
       - name: Check for updates
         id: update
         run: |
+          OLD_VERSION=$(grep -oP 'version = "\K[^"]+' package.nix | head -1)
+
           set +e
           ./scripts/update-version.sh
           UPDATE_EXIT_CODE=$?
           set -e
 
-          if [ $UPDATE_EXIT_CODE -eq 0 ]; then
-            if git diff --quiet package.nix; then
-              echo "has_updates=false" >> $GITHUB_OUTPUT
-              echo "No updates available"
-            else
-              echo "has_updates=true" >> $GITHUB_OUTPUT
-              NEW_VERSION=$(grep -oP 'version = "\K[^"]+' package.nix | head -1)
-              echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-              echo "Updates available: version $NEW_VERSION"
-            fi
-          else
+          if [ $UPDATE_EXIT_CODE -ne 0 ]; then
             echo "has_updates=false" >> $GITHUB_OUTPUT
             echo "Update script failed with exit code $UPDATE_EXIT_CODE"
             exit 1
+          fi
+
+          if git diff --quiet package.nix; then
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "No updates available"
+            exit 0
+          fi
+
+          echo "has_updates=true" >> $GITHUB_OUTPUT
+          NEW_VERSION=$(grep -oP 'version = "\K[^"]+' package.nix | head -1)
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+          if [ "$OLD_VERSION" = "$NEW_VERSION" ]; then
+            # Same version but package.nix changed → upstream mutated the binary
+            # at the existing URL; refresh hashes without bumping the version.
+            echo "commit_msg=fix: refresh cursor $NEW_VERSION hashes (upstream binary changed)" >> $GITHUB_OUTPUT
+            echo "Hash drift detected for version $NEW_VERSION — refreshing"
+          else
+            echo "commit_msg=chore: update cursor to $NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "Updates available: version $OLD_VERSION -> $NEW_VERSION"
           fi
 
       - name: Verify all platform source hashes
@@ -96,5 +110,5 @@ jobs:
         run: |
           git add package.nix
           git diff --quiet --cached && { echo "No changes to commit"; exit 0; }
-          git commit -m "chore: update cursor to ${{ steps.update.outputs.new_version }}"
+          git commit -m "${{ steps.update.outputs.commit_msg }}"
           git push

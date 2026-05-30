@@ -37,11 +37,11 @@ let
   sources = {
     x86_64-linux = fetchurl {
       url = "https://downloads.cursor.com/production/e7a7e93f4d75f8272503ecf33cedbaae10114a15/linux/x64/Cursor-${version}-x86_64.AppImage";
-      hash = "sha256-xizk2rlN9MA7CLEWouKzQqNmzklU/7I1nVnIAjHXDOg=";
+      hash = "sha256-6zIhSz5fxEMLA8zd6oZtwNDUMAW65bZu/fYMSV/Iuh0=";
     };
     aarch64-linux = fetchurl {
       url = "https://downloads.cursor.com/production/e7a7e93f4d75f8272503ecf33cedbaae10114a15/linux/arm64/Cursor-${version}-aarch64.AppImage";
-      hash = "sha256-PdW6E8lsn/IPjAhRixbFU2vJeBFF86Ps/31sdUPlyLs=";
+      hash = "sha256-5DxmpvFUqNybbHSRB6RlM9yVzFKHSoXIkEDygg0b/5A=";
     };
     x86_64-darwin = fetchurl {
       url = "https://downloads.cursor.com/production/e7a7e93f4d75f8272503ecf33cedbaae10114a15/darwin/x64/Cursor-darwin-x64.dmg";

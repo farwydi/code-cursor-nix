@@ -125,14 +125,6 @@ if stdenv.hostPlatform.isLinux then
             $out/share/icons/hicolor/''${size}x''${size}/apps/cursor.png
         fi
       done
-
-      # На NixOS песочница Chromium/Electron не инициализируется внутри FHS/bwrap-окружения
-      # (chrome-sandbox без suid-бита, вложенный user namespace недоступен), из-за чего Cursor
-      # молча падает при запуске. Оборачиваем бинарь, добавляя --no-sandbox по умолчанию.
-      realbin=$(readlink -f $out/bin/${pname})
-      rm $out/bin/${pname}
-      printf '#!/bin/sh\nexec "%s" --no-sandbox "$@"\n' "$realbin" > $out/bin/${pname}
-      chmod +x $out/bin/${pname}
     '';
 
     meta = with lib; {

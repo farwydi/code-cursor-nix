@@ -32,24 +32,24 @@
 
 let
   pname = "cursor";
-  version = "3.17.8";
+  version = "3.17.19";
 
   sources = {
     x86_64-linux = fetchurl {
-      url = "https://downloads.cursor.com/production/2fdd31c9f33f7fbe501f2d57772dc5bf64b63621/linux/x64/Cursor-${version}-x86_64.AppImage";
-      hash = "sha256-OI0gaN8FfRseAGw7u1GQhatA7HguyKsg7CUN8IprdAI=";
+      url = "https://downloads.cursor.com/production/ae3a2b7231dd56194447fe4570dfdc61640b1e9a/linux/x64/Cursor-${version}-x86_64.AppImage";
+      hash = "sha256-kB38QeH6+HK05tSift0Uk62Ob5x1Jwswp/yvVjwk6D8=";
     };
     aarch64-linux = fetchurl {
-      url = "https://downloads.cursor.com/production/2fdd31c9f33f7fbe501f2d57772dc5bf64b63621/linux/arm64/Cursor-${version}-aarch64.AppImage";
-      hash = "sha256-n4c1M9xKqHB2a8X9+zTL4wVx/xwCYLNPYPjqG4JLKQo=";
+      url = "https://downloads.cursor.com/production/ae3a2b7231dd56194447fe4570dfdc61640b1e9a/linux/arm64/Cursor-${version}-aarch64.AppImage";
+      hash = "sha256-qRO/cJB2wGCcEZoXQebxTJ8LCFWI25J4QN4uVh7qsVw=";
     };
     x86_64-darwin = fetchurl {
-      url = "https://downloads.cursor.com/production/2fdd31c9f33f7fbe501f2d57772dc5bf64b63621/darwin/x64/Cursor-darwin-x64.dmg";
-      hash = "sha256-mDGEA9JA4RMUP80fPXyemmzu11BcLJwnJgZlAFasphk=";
+      url = "https://downloads.cursor.com/production/ae3a2b7231dd56194447fe4570dfdc61640b1e9a/darwin/x64/Cursor-darwin-x64.dmg";
+      hash = "sha256-/49cyDWaaNTkXfFT/e0FqotYCb7KXPNhaYF7vI8WJUw=";
     };
     aarch64-darwin = fetchurl {
-      url = "https://downloads.cursor.com/production/2fdd31c9f33f7fbe501f2d57772dc5bf64b63621/darwin/arm64/Cursor-darwin-arm64.dmg";
-      hash = "sha256-LB+sVUgStNEcU64Chto136goc4Y/ryTgiWRFmv1dJZ4=";
+      url = "https://downloads.cursor.com/production/ae3a2b7231dd56194447fe4570dfdc61640b1e9a/darwin/arm64/Cursor-darwin-arm64.dmg";
+      hash = "sha256-v2ZvHmKRJMXbsuSjRgS/11Z58YuyhVa8DmhwoGPJP8U=";
     };
   };
 

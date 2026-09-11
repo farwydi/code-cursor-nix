@@ -41,7 +41,7 @@ let
     };
     aarch64-linux = fetchurl {
       url = "https://downloads.cursor.com/production/d6f462cdd0a6a6d1cff570daf980e671d0a63ded/linux/arm64/Cursor-${version}-aarch64.AppImage";
-      hash = "sha256-rx8H7HoCsHHqmEJd/oLBngyPrVFxNKRMROGd/ziqtoA=";
+      hash = "sha256-nfd88U0y44nDd7gnHcfyIajV53Jn30pBB5MzeoU1FTk=";
     };
     x86_64-darwin = fetchurl {
       url = "https://downloads.cursor.com/production/d6f462cdd0a6a6d1cff570daf980e671d0a63ded/darwin/x64/Cursor-darwin-x64.dmg";
